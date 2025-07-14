@@ -10,3 +10,8 @@ do
 	echo "$count"
 	((count++))
 done
+
+for i in {1..5}
+do 
+	echo "tamimul islam"
+done
