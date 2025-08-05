@@ -13,6 +13,8 @@ current_time=0
 waiting_times=()
 turnaround_times=()
 
+echo "PID  Arrival  Burst  Completion  Turnaround  waiting"
+
 while [[ ${#remaining[@]} -gt 0 ]]; do
     ready=()
     for proc in "${remaining[@]}"; do
@@ -39,7 +41,8 @@ while [[ ${#remaining[@]} -gt 0 ]]; do
     tat=$(( current_time - at ))
     waiting=$(( tat - bt ))
 
-    echo "$pid --> AT: $at -->BT: $bt --> CT:$current_time -->TAT: $tat --> WT: $waiting"
+    #echo "$pid --> AT: $at -->BT: $bt --> CT:$current_time -->TAT: $tat --> WT: $waiting"
+    printf "%-4s %-8s %-6s %-11s %-11s %-9s\n" "$pid" "$at" "$bt" "$current_time" "$tat" "$waiting"
     
     waiting_times+=($waiting)
     turnaround_times+=($tat)
