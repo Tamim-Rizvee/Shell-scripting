@@ -1,9 +1,12 @@
 #!/bin/bash
-process=("p1 0 5"
-         "p2 1 3"
-         "p3 2 8"
-         "p4 3 6"
-         )
+process=()
+
+read -p "Enter the number of processes: " process_number
+echo "Enter the process (process id, arrival time, burst time)"
+for (( i=1 ; i<=process_number ; i++ )); do
+    read -p "For process $i (pid at bt): " pid at bt
+    process+=("$pid $at $bt")
+done
 remaining=("${process[@]}")
 
 current_time=0
@@ -49,3 +52,12 @@ while [[ ${#remaining[@]} -gt 0 ]]; do
     done
     remaining=("${temp[@]}")
 done
+
+waiting_sum=0
+tat_sum=0
+for (( i=0; i<process_number ; i++ )); do
+    waiting_sum=$(( waiting_sum + ${waiting_times[i]} ))
+    tat_sum=$(( tat_sum + ${turnaround_times[i]} ))
+done
+echo "Average waiting time: $(echo "scale=2; $waiting_sum / $process_number" | bc)"
+echo "Average turnaround time : $(echo "scale=2; $tat_sum / $process_number" | bc)" 
