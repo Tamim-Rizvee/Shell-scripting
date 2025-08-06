@@ -10,10 +10,13 @@ done
 remaining=("${process[@]}")
 
 current_time=0
-waiting_times=()
-turnaround_times=()
+log=()
 
-echo "PID  Arrival  Burst  Completion  Turnaround  waiting"
+declare -A completion_times 
+declare -A waiting_times 
+declare -A turnaround_times
+
+
 
 while [[ ${#remaining[@]} -gt 0 ]]; do
     ready=()
@@ -37,15 +40,15 @@ while [[ ${#remaining[@]} -gt 0 ]]; do
     at=$(awk '{print $2}' <<< "$next_pro")
     bt=$(awk '{print $3}' <<< "$next_pro")
 
+    log+=("[$current_time]-->$pid")
+
     current_time=$(( current_time + bt ))
     tat=$(( current_time - at ))
     waiting=$(( tat - bt ))
-
-    #echo "$pid --> AT: $at -->BT: $bt --> CT:$current_time -->TAT: $tat --> WT: $waiting"
-    printf "%-4s %-8s %-6s %-11s %-11s %-9s\n" "$pid" "$at" "$bt" "$current_time" "$tat" "$waiting"
     
-    waiting_times+=($waiting)
-    turnaround_times+=($tat)
+    waiting_times["$pid"]=$waiting
+    turnaround_times["$pid"]=$tat
+    completion_times["$pid"]=$current_time
 
     temp=()
     for pros in "${remaining[@]}"; do
@@ -56,11 +59,26 @@ while [[ ${#remaining[@]} -gt 0 ]]; do
     remaining=("${temp[@]}")
 done
 
+echo 
+echo "Execution log: "
+printf "%s\n" "${log[@]}"
+echo
+
+echo "PID  Arrival  Burst  Completion  Turnaround  Waiting"
+
 waiting_sum=0
 tat_sum=0
-for (( i=0; i<process_number ; i++ )); do
-    waiting_sum=$(( waiting_sum + ${waiting_times[i]} ))
-    tat_sum=$(( tat_sum + ${turnaround_times[i]} ))
+for pros in "${process[@]}"; do
+    pid=$(awk '{print $1}' <<< "$pros")
+    at=$(awk '{print $2}' <<< "$pros")
+    bt=$(awk '{print $3}' <<< "$pros")
+    ct=${completion_times["$pid"]}
+    tat=${turnaround_times["$pid"]}
+    wt=${waiting_times["$pid"]}
+    waiting_sum=$(( waiting_sum + wt ))
+    tat_sum=$(( tat_sum + tat ))
+    printf "%-4s %-8s %-6s %-11s %-11s %-7s\n" "$pid" "$at" "$bt" "$ct" "$tat" "$wt"
 done
+echo
 echo "Average waiting time: $(echo "scale=2; $waiting_sum / $process_number" | bc)"
 echo "Average turnaround time : $(echo "scale=2; $tat_sum / $process_number" | bc)" 
