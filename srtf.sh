@@ -15,9 +15,7 @@ declare -A waiting_times
 declare -A turnaround_times
 
 for pros in "${process[@]}"; do
-    pid=$(awk '{print $1}' <<< "$pros")
-    at=$(awk '{print $2}' <<< "$pros")
-    bt=$(awk '{print $3}' <<< "$pros")
+    read -r pid at bt <<< "$pros"
 
     remaining+=("$pid $at $bt $bt")
 done
@@ -37,10 +35,7 @@ while [[ $completed -lt $process_number ]]; do
     fi
 
     next_pros=$(printf "%s\n" "${ready[@]}" | sort -k4 -n | head -n1) 
-    pid=$(awk '{print $1}' <<< "$next_pros")
-    at=$(awk '{print $2}' <<< "$next_pros")
-    bt=$(awk '{print $3}' <<< "$next_pros")
-    rt=$(awk '{print $4}' <<< "$next_pros")  
+    read -r pid at bt rt <<< "$next_pros"
 
     log+=("[$current_time]-->$pid")
 
@@ -76,9 +71,7 @@ echo "PID  Arrival  Burst  Completion  Turnaround  Waiting"
 waiting_sum=0
 tat_sum=0
 for pros in "${process[@]}"; do
-    pid=$(awk '{print $1}' <<< "$pros")
-    at=$(awk '{print $2}' <<< "$pros")
-    bt=$(awk '{print $3}' <<< "$pros")
+    read -r pid at bt <<< "$pros"
     ct=${completion_times["$pid"]}
     tat=${turnaround_times["$pid"]}
     wt=${waiting_times["$pid"]}
