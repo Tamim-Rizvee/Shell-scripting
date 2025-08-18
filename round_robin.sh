@@ -8,10 +8,11 @@ for (( i=1 ; i<=process_number ; i++ )); do
     read -p "For process $i (pid at bt): " pid at bt
     process+=("$pid $at $bt")
 done
+read -p "Enter quantum time : " quantum_time
+echo 
 
 remaining=()
 current_time=0
-quantum_time=2
 entered=0
 log=()
 declare -A completion_times
