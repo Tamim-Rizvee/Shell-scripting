@@ -12,20 +12,23 @@ void *routine(void *args)
         mail++;
         pthread_mutex_unlock(&mut);
     }
-    printf("Value of mail is: %d\n", mail);
     return NULL;
 }
 
 int main()
 {
-    pthread_t thread1, thread2;
+    pthread_t th[8];
     pthread_mutex_init(&mut, NULL);
-    pthread_create(&thread1, NULL, &routine, NULL);
-    pthread_create(&thread2, NULL, &routine, NULL);
-
-    pthread_join(thread1, NULL);
-    pthread_join(thread2, NULL);
+    for (int i = 0; i < 8; i++)
+    {
+        pthread_create(&th[i], NULL, &routine, NULL);
+        printf("Thread started no %d\n", i + 1);
+    }
+    for (int i = 0; i < 8; i++)
+    {
+        pthread_join(th[i], NULL);
+    }
+    printf("Value of mail is: %d\n", mail);
     pthread_mutex_destroy(&mut);
-
     return 0;
 }
