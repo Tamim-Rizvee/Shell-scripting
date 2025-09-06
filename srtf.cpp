@@ -5,20 +5,26 @@
 using namespace std;
 class process;
 
-map<int, int> turn_around_time, waiting_time, completion_time;
+unordered_map<int, int> turn_around_time, waiting_time, completion_time;
 ifstream input_file("input.txt");
 
 class process
 {
 public:
-    int id, arrival_time, burst_time;
+    int id, arrival_time, burst_time, remaining_time;
     process() {}
-    process(int id, int at, int bt) : id(id), arrival_time(at), burst_time(bt) {}
+    process(int id, int at, int bt, int rt = 0)
+    {
+        this->id = id;
+        this->arrival_time = at;
+        this->burst_time = bt;
+        this->remaining_time = (rt == 0 ? bt : rt);
+    }
     bool operator>(const process &p1) const
     {
-        if (this->burst_time > p1.burst_time)
+        if (this->remaining_time > p1.remaining_time)
             return true;
-        else if (this->burst_time == p1.burst_time)
+        else if (this->remaining_time == p1.remaining_time)
             return this->id > p1.id;
         return false;
     }
@@ -40,19 +46,19 @@ void make_arr(string input, vector<process> &processes)
     }
 }
 
-void sjf(vector<process> &processes)
+void srtf(vector<process> &processes)
 {
     int current_time = 0, completed = 0, process_number = processes.size();
     map<int, bool> entered;
     priority_queue<process, vector<process>, greater<process>> ready_queue;
     while (completed < process_number)
     {
-        for (int i = 0; i < (int)processes.size(); i++)
+        for (auto x : processes)
         {
-            if (processes[i].arrival_time <= current_time && !entered[processes[i].id])
+            if (x.arrival_time <= current_time && !entered[x.id])
             {
-                ready_queue.push(processes[i]);
-                entered[processes[i].id] = true;
+                ready_queue.push(x);
+                entered[x.id] = true;
             }
         }
 
@@ -68,16 +74,25 @@ void sjf(vector<process> &processes)
         int id = next_process.id;
         int at = next_process.arrival_time;
         int bt = next_process.burst_time;
+        int rt = next_process.remaining_time;
 
-        current_time += bt;
-        int ct = current_time;
-        int tat = ct - at;
-        int wt = tat - bt;
+        rt--;
+        current_time++;
 
-        completion_time[id] = ct;
-        turn_around_time[id] = tat;
-        waiting_time[id] = wt;
-        completed++;
+        if (rt == 0)
+        {
+            int ct = current_time;
+            int tat = ct - at;
+            int wt = tat - bt;
+
+            completion_time[id] = ct;
+            turn_around_time[id] = tat;
+            waiting_time[id] = wt;
+
+            completed++;
+            continue;
+        }
+        ready_queue.push(process(id, at, bt, rt));
     }
 }
 
@@ -101,7 +116,7 @@ int main()
         return 1;
     }
 
-    sjf(processes);
+    srtf(processes);
 
     int process_number = processes.size();
 

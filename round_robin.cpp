@@ -5,22 +5,20 @@
 using namespace std;
 class process;
 
-map<int, int> turn_around_time, waiting_time, completion_time;
+unordered_map<int, int> turn_around_time, waiting_time, completion_time;
 ifstream input_file("input.txt");
 
 class process
 {
 public:
-    int id, arrival_time, burst_time;
+    int id, arrival_time, burst_time, remaining_time;
     process() {}
-    process(int id, int at, int bt) : id(id), arrival_time(at), burst_time(bt) {}
-    bool operator>(const process &p1) const
+    process(int id, int at, int bt, int rt = 0)
     {
-        if (this->burst_time > p1.burst_time)
-            return true;
-        else if (this->burst_time == p1.burst_time)
-            return this->id > p1.id;
-        return false;
+        this->id = id;
+        this->arrival_time = at;
+        this->burst_time = bt;
+        this->remaining_time = (rt == 0 ? bt : rt);
     }
 };
 void make_arr(string input, vector<process> &processes)
@@ -40,21 +38,25 @@ void make_arr(string input, vector<process> &processes)
     }
 }
 
-void sjf(vector<process> &processes)
+void round_robin(vector<process> &processes, int quantum_time)
 {
     int current_time = 0, completed = 0, process_number = processes.size();
     map<int, bool> entered;
-    priority_queue<process, vector<process>, greater<process>> ready_queue;
+    deque<process> ready_queue;
+    process push(0, 0, 0);
     while (completed < process_number)
     {
-        for (int i = 0; i < (int)processes.size(); i++)
+        for (auto x : processes)
         {
-            if (processes[i].arrival_time <= current_time && !entered[processes[i].id])
+            if (x.arrival_time <= current_time && !entered[x.id])
             {
-                ready_queue.push(processes[i]);
-                entered[processes[i].id] = true;
+                ready_queue.push_back(x);
+                entered[x.id] = true;
             }
         }
+
+        if(push.id != 0)
+            ready_queue.push_back(push);
 
         if (ready_queue.empty())
         {
@@ -62,22 +64,40 @@ void sjf(vector<process> &processes)
             continue;
         }
 
-        process next_process = ready_queue.top();
-        ready_queue.pop();
+        process next_process = ready_queue.front();
+        ready_queue.pop_front();
 
         int id = next_process.id;
         int at = next_process.arrival_time;
         int bt = next_process.burst_time;
+        int rt = next_process.remaining_time;
 
-        current_time += bt;
-        int ct = current_time;
-        int tat = ct - at;
-        int wt = tat - bt;
+        if (rt >= quantum_time)
+        {
+            rt -= quantum_time;
+            current_time += quantum_time;
+        }
+        else
+        {
+            current_time += rt;
+            rt = 0;
+        }
 
-        completion_time[id] = ct;
-        turn_around_time[id] = tat;
-        waiting_time[id] = wt;
-        completed++;
+        if (rt == 0)
+        {
+            int ct = current_time;
+            int tat = ct - at;
+            int wt = tat - bt;
+
+            completion_time[id] = ct;
+            turn_around_time[id] = tat;
+            waiting_time[id] = wt;
+
+            completed++;
+            push = process(0, 0, 0);
+            continue;
+        }
+        push = process(id, at, bt, rt);
     }
 }
 
@@ -85,6 +105,7 @@ int main()
 {
     Onii_chan;
     vector<process> processes;
+    int quantum_time = 2;
     string line;
     while (getline(input_file, line))
     {
@@ -101,10 +122,9 @@ int main()
         return 1;
     }
 
-    sjf(processes);
+    round_robin(processes, quantum_time);
 
     int process_number = processes.size();
-
     // Print comprehensive table
     cout << uwu << "=== PROCESS SCHEDULING TABLE ===" << uwu;
     cout << "+-----------+----+----+------+------+------+" << uwu;
